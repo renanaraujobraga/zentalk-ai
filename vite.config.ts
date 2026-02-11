@@ -22,6 +22,13 @@ export default defineConfig({
   },
   build: {
     outDir: '../dist',
-    sourcemap: true,
+    sourcemap: false,
+    minify: 'esbuild',
+    target: 'es2015',
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
   },
 });
