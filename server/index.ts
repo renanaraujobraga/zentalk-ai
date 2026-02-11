@@ -61,7 +61,15 @@ app.get('/api/health', (_req: Request, res: Response) => {
 
 // Serve static files
 const distPath = path.join(__dirname, '../dist')
-app.use(express.static(distPath))
+app.use(express.static(distPath, {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript; charset=UTF-8')
+    } else if (filePath.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css; charset=UTF-8')
+    }
+  }
+}))
 
 // SPA fallback - serve index.html for all non-API routes (but not /api/*)
 app.get('*', (req: Request, res: Response) => {
