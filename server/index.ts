@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express'
 import cors from 'cors'
-import dotenv from 'dotenv'
 import path from 'path'
+import dotenv from 'dotenv'
 import { fileURLToPath } from 'url'
 import { verifyToken, JWTPayload } from './auth'
 import authRoutes from './routes/auth'
@@ -12,7 +12,10 @@ import agentsRoutes from './routes/agents'
 import vouchersRoutes from './routes/vouchers'
 import whatsappRoutes from './routes/whatsapp'
 
-dotenv.config()
+// Load .env only in development
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config()
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const app = express()
