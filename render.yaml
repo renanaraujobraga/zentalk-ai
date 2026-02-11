@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: zentalk-ai
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: pnpm install && pnpm drizzle-kit push && node seed-db.mjs && pnpm build
+    startCommand: npx tsx server/index.ts
+    envVars:
+      - key: NODE_VERSION
+        value: 22.13.0
+      - key: DATABASE_URL
+        value: file:./zentalk.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
