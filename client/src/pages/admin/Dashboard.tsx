@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import AdminLayout from '../../components/AdminLayout'
-import { Users, TrendingUp, CreditCard, Zap } from 'lucide-react'
+import { Users, TrendingUp, CreditCard, Zap, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import { adminApi } from '../../lib/api'
 
 interface DashboardStats {
@@ -18,69 +18,68 @@ export default function AdminDashboard() {
     pendingVouchers: 0,
   })
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        setLoading(true)
         const data = await adminApi.getDashboard()
         setStats(data.stats)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard')
+      } catch {
+        // Use default values
       } finally {
         setLoading(false)
       }
     }
-
     fetchDashboard()
   }, [])
 
   const statsList = [
     {
-      label: 'Total Clients',
+      label: 'Total de Clientes',
       value: stats.totalUsers.toLocaleString(),
       icon: Users,
       color: 'bg-blue-500',
+      trend: '+12%',
+      trendUp: true,
     },
     {
-      label: 'Monthly Revenue',
+      label: 'Receita Mensal',
       value: `$${stats.totalRevenue.toLocaleString()}`,
       icon: CreditCard,
       color: 'bg-green-500',
+      trend: '+8%',
+      trendUp: true,
     },
     {
-      label: 'Active Influencers',
+      label: 'Influenciadores Ativos',
       value: stats.activeInfluencers.toLocaleString(),
       icon: Zap,
       color: 'bg-purple-500',
+      trend: '+3%',
+      trendUp: true,
     },
     {
-      label: 'Pending Vouchers',
+      label: 'Vouchers Pendentes',
       value: stats.pendingVouchers.toLocaleString(),
       icon: TrendingUp,
       color: 'bg-orange-500',
+      trend: '-5%',
+      trendUp: false,
     },
   ]
 
   return (
-    <AdminLayout currentPage="dashboard">
+    <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-2">Welcome back! Here's your business overview.</p>
+          <h1 className="text-2xl font-bold text-gray-900">Bem-vindo de volta!</h1>
+          <p className="text-gray-500 mt-1">Aqui está o resumo do seu negócio.</p>
         </div>
-
-        {error && (
-          <div className="rounded-md bg-red-50 p-4">
-            <p className="text-sm font-medium text-red-800">{error}</p>
-          </div>
-        )}
 
         {loading ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg shadow-sm p-6 animate-pulse">
+              <div key={i} className="bg-white rounded-xl shadow-sm p-6 animate-pulse">
                 <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
                 <div className="h-8 bg-gray-200 rounded w-1/2"></div>
               </div>
@@ -91,16 +90,18 @@ export default function AdminDashboard() {
             {statsList.map((stat) => {
               const Icon = stat.icon
               return (
-                <div key={stat.label} className="bg-white rounded-lg shadow-sm p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-600 text-sm font-medium">{stat.label}</p>
-                      <p className="text-2xl font-bold text-gray-900 mt-2">{stat.value}</p>
-                    </div>
+                <div key={stat.label} className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition">
+                  <div className="flex items-center justify-between mb-4">
                     <div className={`${stat.color} p-3 rounded-lg`}>
-                      <Icon className="text-white" size={24} />
+                      <Icon className="text-white" size={22} />
                     </div>
+                    <span className={`flex items-center gap-1 text-sm font-medium ${stat.trendUp ? 'text-green-600' : 'text-red-500'}`}>
+                      {stat.trendUp ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                      {stat.trend}
+                    </span>
                   </div>
+                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                  <p className="text-gray-500 text-sm mt-1">{stat.label}</p>
                 </div>
               )
             })}
@@ -108,29 +109,50 @@ export default function AdminDashboard() {
         )}
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-              <div>
-                <p className="font-medium text-gray-900">New client signup</p>
-                <p className="text-sm text-gray-600">John Doe registered</p>
-              </div>
-              <span className="text-sm text-gray-500">2 hours ago</span>
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Atividade Recente</h2>
+            <div className="space-y-4">
+              {[
+                { title: 'Novo cliente cadastrado', desc: 'João Silva se registrou', time: '2 horas atrás', color: 'bg-blue-500' },
+                { title: 'Agente implantado', desc: 'Agente de Vendas v2.1 ativado', time: '4 horas atrás', color: 'bg-green-500' },
+                { title: 'Pagamento recebido', desc: '$5.000 da Empresa ABC', time: '1 dia atrás', color: 'bg-purple-500' },
+                { title: 'Voucher resgatado', desc: 'Código PROMO20 utilizado', time: '2 dias atrás', color: 'bg-orange-500' },
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-4">
+                  <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${item.color}`}></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 text-sm">{item.title}</p>
+                    <p className="text-gray-500 text-xs">{item.desc}</p>
+                  </div>
+                  <span className="text-xs text-gray-400 flex-shrink-0">{item.time}</span>
+                </div>
+              ))}
             </div>
-            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-              <div>
-                <p className="font-medium text-gray-900">Agent deployment</p>
-                <p className="text-sm text-gray-600">Sales Agent v2.1 deployed</p>
-              </div>
-              <span className="text-sm text-gray-500">4 hours ago</span>
-            </div>
-            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-              <div>
-                <p className="font-medium text-gray-900">Payment received</p>
-                <p className="text-sm text-gray-600">$5,000 from Acme Corp</p>
-              </div>
-              <span className="text-sm text-gray-500">1 day ago</span>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Métricas de Performance</h2>
+            <div className="space-y-5">
+              {[
+                { label: 'Taxa de Conversão', value: '23.5%', percent: 23.5, color: 'bg-blue-500' },
+                { label: 'Satisfação do Cliente', value: '92%', percent: 92, color: 'bg-green-500' },
+                { label: 'Tempo de Resposta', value: '45s', percent: 60, color: 'bg-purple-500' },
+                { label: 'Uptime do Sistema', value: '99.9%', percent: 99.9, color: 'bg-orange-500' },
+              ].map((metric, i) => (
+                <div key={i}>
+                  <div className="flex justify-between mb-1.5">
+                    <span className="text-sm font-medium text-gray-700">{metric.label}</span>
+                    <span className="text-sm font-bold text-gray-900">{metric.value}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2">
+                    <div
+                      className={`${metric.color} h-2 rounded-full transition-all`}
+                      style={{ width: `${metric.percent}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

@@ -20,8 +20,6 @@ import AdminSecurity from './pages/admin/Security'
 import AdminProfile from './pages/admin/Profile'
 import AdminWhatsApp from './pages/admin/WhatsApp'
 import AdminAnalytics from './pages/admin/Analytics'
-
-// Admin Pages extras
 import AdminPlans from './pages/admin/Plans'
 import AdminInfluencers from './pages/admin/Influencers'
 
@@ -33,24 +31,34 @@ import ClientIntegrations from './pages/client/Integrations'
 import ClientSettings from './pages/client/Settings'
 import ClientReferral from './pages/client/Referral'
 
-function ProtectedRoute({ children, isAuthenticated }: { children: React.ReactNode; isAuthenticated: boolean }) {
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />
+function ProtectedAdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, token } = useAuthStore()
+  if (!token || !user) return <Navigate to="/login" replace />
+  if (user.role !== 'admin') return <Navigate to="/client" replace />
+  return <>{children}</>
 }
 
-function PublicRoute({ children, isAuthenticated, user }: { children: React.ReactNode; isAuthenticated: boolean; user: any }) {
-  if (!isAuthenticated) return <>{children}</>
-  if (user?.role === 'admin') return <Navigate to="/admin" replace />
+function ProtectedClientRoute({ children }: { children: React.ReactNode }) {
+  const { token } = useAuthStore()
+  if (!token) return <Navigate to="/login" replace />
+  return <>{children}</>
+}
+
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { user, token } = useAuthStore()
+  if (!token || !user) return <>{children}</>
+  if (user.role === 'admin') return <Navigate to="/admin" replace />
   return <Navigate to="/client" replace />
 }
 
 export default function App() {
-  const { user, token, logout } = useAuthStore()
+  const { token, logout } = useAuthStore()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const validateToken = async () => {
       const savedToken = token || localStorage.getItem('token')
-      
+
       if (!savedToken) {
         setLoading(false)
         return
@@ -62,7 +70,6 @@ export default function App() {
         })
 
         if (!response.ok) {
-          // Token is invalid - clear everything
           logout()
           localStorage.removeItem('token')
           localStorage.removeItem('auth-store')
@@ -71,10 +78,8 @@ export default function App() {
           useAuthStore.setState({ user: data.user, token: savedToken })
           localStorage.setItem('token', savedToken)
         }
-      } catch (error) {
-        // Network error or server down - clear token
-        logout()
-        localStorage.removeItem('token')
+      } catch {
+        // Network error - keep token for now, will fail on API calls
       } finally {
         setLoading(false)
       }
@@ -83,20 +88,30 @@ export default function App() {
     validateToken()
   }, [])
 
-  const isAuthenticated = !!token && !!user
-
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         height: '100vh',
-        background: '#1e3a5f',
+        background: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)',
         color: 'white',
-        fontSize: '18px'
+        fontSize: '18px',
+        fontFamily: 'sans-serif',
+        flexDirection: 'column',
+        gap: '16px'
       }}>
-        Carregando...
+        <div style={{
+          width: '48px',
+          height: '48px',
+          border: '4px solid rgba(255,255,255,0.3)',
+          borderTop: '4px solid white',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <span>Carregando Zentalk.AI...</span>
       </div>
     )
   }
@@ -105,36 +120,32 @@ export default function App() {
     <Router>
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<PublicRoute isAuthenticated={isAuthenticated} user={user}><Home /></PublicRoute>} />
-        <Route path="/login" element={<PublicRoute isAuthenticated={isAuthenticated} user={user}><Login /></PublicRoute>} />
-        <Route path="/register" element={<PublicRoute isAuthenticated={isAuthenticated} user={user}><Register /></PublicRoute>} />
+        <Route path="/" element={<PublicRoute><Home /></PublicRoute>} />
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
         <Route path="/plans" element={<Plans />} />
 
-        {/* Admin Routes */}
-        {user?.role === 'admin' && (
-          <>
-            <Route path="/admin" element={<ProtectedRoute isAuthenticated={isAuthenticated}><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/admin/clients" element={<ProtectedRoute isAuthenticated={isAuthenticated}><AdminClients /></ProtectedRoute>} />
-            <Route path="/admin/plans" element={<ProtectedRoute isAuthenticated={isAuthenticated}><AdminPlans /></ProtectedRoute>} />
-            <Route path="/admin/billing" element={<ProtectedRoute isAuthenticated={isAuthenticated}><AdminBilling /></ProtectedRoute>} />
-            <Route path="/admin/ia-costs" element={<ProtectedRoute isAuthenticated={isAuthenticated}><AdminIACosts /></ProtectedRoute>} />
-            <Route path="/admin/influencers" element={<ProtectedRoute isAuthenticated={isAuthenticated}><AdminInfluencers /></ProtectedRoute>} />
-            <Route path="/admin/vouchers" element={<ProtectedRoute isAuthenticated={isAuthenticated}><AdminVouchers /></ProtectedRoute>} />
-            <Route path="/admin/monitoring" element={<ProtectedRoute isAuthenticated={isAuthenticated}><AdminMonitoring /></ProtectedRoute>} />
-            <Route path="/admin/security" element={<ProtectedRoute isAuthenticated={isAuthenticated}><AdminSecurity /></ProtectedRoute>} />
-            <Route path="/admin/whatsapp" element={<ProtectedRoute isAuthenticated={isAuthenticated}><AdminWhatsApp /></ProtectedRoute>} />
-            <Route path="/admin/profile" element={<ProtectedRoute isAuthenticated={isAuthenticated}><AdminProfile /></ProtectedRoute>} />
-            <Route path="/admin/analytics" element={<ProtectedRoute isAuthenticated={isAuthenticated}><AdminAnalytics /></ProtectedRoute>} />
-          </>
-        )}
+        {/* Admin Routes - always registered, protection inside */}
+        <Route path="/admin" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
+        <Route path="/admin/clients" element={<ProtectedAdminRoute><AdminClients /></ProtectedAdminRoute>} />
+        <Route path="/admin/plans" element={<ProtectedAdminRoute><AdminPlans /></ProtectedAdminRoute>} />
+        <Route path="/admin/billing" element={<ProtectedAdminRoute><AdminBilling /></ProtectedAdminRoute>} />
+        <Route path="/admin/ia-costs" element={<ProtectedAdminRoute><AdminIACosts /></ProtectedAdminRoute>} />
+        <Route path="/admin/influencers" element={<ProtectedAdminRoute><AdminInfluencers /></ProtectedAdminRoute>} />
+        <Route path="/admin/vouchers" element={<ProtectedAdminRoute><AdminVouchers /></ProtectedAdminRoute>} />
+        <Route path="/admin/monitoring" element={<ProtectedAdminRoute><AdminMonitoring /></ProtectedAdminRoute>} />
+        <Route path="/admin/security" element={<ProtectedAdminRoute><AdminSecurity /></ProtectedAdminRoute>} />
+        <Route path="/admin/whatsapp" element={<ProtectedAdminRoute><AdminWhatsApp /></ProtectedAdminRoute>} />
+        <Route path="/admin/profile" element={<ProtectedAdminRoute><AdminProfile /></ProtectedAdminRoute>} />
+        <Route path="/admin/analytics" element={<ProtectedAdminRoute><AdminAnalytics /></ProtectedAdminRoute>} />
 
         {/* Client Routes */}
-        <Route path="/client" element={<ProtectedRoute isAuthenticated={isAuthenticated}><ClientDashboard /></ProtectedRoute>} />
-        <Route path="/client/agents" element={<ProtectedRoute isAuthenticated={isAuthenticated}><ClientAgents /></ProtectedRoute>} />
-        <Route path="/client/integrations" element={<ProtectedRoute isAuthenticated={isAuthenticated}><ClientIntegrations /></ProtectedRoute>} />
-        <Route path="/client/settings" element={<ProtectedRoute isAuthenticated={isAuthenticated}><ClientSettings /></ProtectedRoute>} />
-        <Route path="/client/referral" element={<ProtectedRoute isAuthenticated={isAuthenticated}><ClientReferral /></ProtectedRoute>} />
-        <Route path="/client/profile" element={<ProtectedRoute isAuthenticated={isAuthenticated}><ClientProfile /></ProtectedRoute>} />
+        <Route path="/client" element={<ProtectedClientRoute><ClientDashboard /></ProtectedClientRoute>} />
+        <Route path="/client/agents" element={<ProtectedClientRoute><ClientAgents /></ProtectedClientRoute>} />
+        <Route path="/client/integrations" element={<ProtectedClientRoute><ClientIntegrations /></ProtectedClientRoute>} />
+        <Route path="/client/settings" element={<ProtectedClientRoute><ClientSettings /></ProtectedClientRoute>} />
+        <Route path="/client/referral" element={<ProtectedClientRoute><ClientReferral /></ProtectedClientRoute>} />
+        <Route path="/client/profile" element={<ProtectedClientRoute><ClientProfile /></ProtectedClientRoute>} />
 
         {/* 404 */}
         <Route path="/404" element={<NotFound />} />

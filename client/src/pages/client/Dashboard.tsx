@@ -1,76 +1,69 @@
 import { useState, useEffect } from 'react'
 import ClientLayout from '../../components/ClientLayout'
-import { Users, MessageSquare, TrendingUp, Zap } from 'lucide-react'
+import { MessageSquare, TrendingUp, Zap, Bot, ArrowUpRight, Clock, CheckCircle } from 'lucide-react'
 import { clientApi } from '../../lib/api'
-import { useTranslation } from '../../hooks/useTranslation'
+import { useAuthStore } from '../../store/auth'
 
 export default function ClientDashboard() {
-  const { t } = useTranslation()
+  const { user } = useAuthStore()
   const [activeTab, setActiveTab] = useState<'dashboard' | 'analytics'>('dashboard')
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        setLoading(true)
         await clientApi.getDashboard()
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('messages.error'))
+      } catch {
+        // Use default values
       } finally {
         setLoading(false)
       }
     }
-
     fetchDashboard()
-  }, [t])
+  }, [])
 
   const stats = [
     {
-      label: t('dashboard.totalAgents'),
+      label: 'Agentes Ativos',
       value: '3',
-      icon: Zap,
+      icon: Bot,
       color: 'bg-blue-500',
+      trend: '+1',
+      trendUp: true,
     },
     {
-      label: t('dashboard.activeConversations'),
-      value: '1,234',
+      label: 'Conversas Hoje',
+      value: '1.234',
       icon: MessageSquare,
       color: 'bg-green-500',
+      trend: '+18%',
+      trendUp: true,
     },
     {
-      label: 'Conversion Rate',
+      label: 'Taxa de Conversão',
       value: '23.5%',
       icon: TrendingUp,
       color: 'bg-purple-500',
+      trend: '+2.1%',
+      trendUp: true,
     },
     {
-      label: t('nav.profile'),
-      value: '5',
-      icon: Users,
+      label: 'Leads Qualificados',
+      value: '89',
+      icon: Zap,
       color: 'bg-orange-500',
+      trend: '+5',
+      trendUp: true,
     },
   ]
 
   if (loading) {
     return (
       <ClientLayout>
-        <div className="flex items-center justify-center h-screen">
+        <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p>{t('messages.loading')}</p>
-          </div>
-        </div>
-      </ClientLayout>
-    )
-  }
-
-  if (error) {
-    return (
-      <ClientLayout>
-        <div className="p-8">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">{error}</p>
+            <p className="text-gray-500">Carregando...</p>
           </div>
         </div>
       </ClientLayout>
@@ -79,103 +72,131 @@ export default function ClientDashboard() {
 
   return (
     <ClientLayout>
-      <div className="p-8 bg-gray-50 min-h-screen">
-        <h1 className="text-3xl font-bold mb-8">{t('dashboard.title')}</h1>
+      <div className="p-6 bg-gray-50 min-h-full">
+        {/* Welcome */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Olá, {user?.name?.split(' ')[0] || 'Usuário'}! 👋</h1>
+          <p className="text-gray-500 mt-1">Aqui está o resumo das suas atividades.</p>
+        </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, idx) => (
-            <div key={idx} className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm">{stat.label}</p>
-                  <p className="text-3xl font-bold mt-2">{stat.value}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+          {stats.map((stat, idx) => {
+            const Icon = stat.icon
+            return (
+              <div key={idx} className="bg-white rounded-xl shadow-sm p-5 hover:shadow-md transition">
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`${stat.color} p-2.5 rounded-lg`}>
+                    <Icon className="w-5 h-5 text-white" />
+                  </div>
+                  <span className={`flex items-center gap-0.5 text-xs font-medium ${stat.trendUp ? 'text-green-600' : 'text-red-500'}`}>
+                    <ArrowUpRight size={14} />
+                    {stat.trend}
+                  </span>
                 </div>
-                <div className={`${stat.color} p-3 rounded-lg`}>
-                  <stat.icon className="w-6 h-6 text-white" />
-                </div>
+                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-gray-500 text-sm mt-0.5">{stat.label}</p>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {/* Tabs */}
-        <div className="mb-8">
-          <div className="flex gap-4 border-b">
+        <div className="mb-6">
+          <div className="flex gap-1 border-b border-gray-200">
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`py-2 px-4 font-medium ${
+              className={`py-2 px-4 text-sm font-medium transition ${
                 activeTab === 'dashboard'
-                  ? 'border-b-2 border-blue-500 text-blue-500'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'border-b-2 border-blue-500 text-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              {t('dashboard.title')}
+              Visão Geral
             </button>
             <button
               onClick={() => setActiveTab('analytics')}
-              className={`py-2 px-4 font-medium ${
+              className={`py-2 px-4 text-sm font-medium transition ${
                 activeTab === 'analytics'
-                  ? 'border-b-2 border-blue-500 text-blue-500'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'border-b-2 border-blue-500 text-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              {t('analytics.title')}
+              Analytics
             </button>
           </div>
         </div>
 
         {/* Content */}
         {activeTab === 'dashboard' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold mb-4">{t('dashboard.recentActivity')}</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Atividade Recente</h2>
               <div className="space-y-4">
-                <div className="border-l-4 border-blue-500 pl-4 py-2">
-                  <p className="font-medium">Nova conversa iniciada</p>
-                  <p className="text-sm text-gray-600">Há 2 horas</p>
-                </div>
-                <div className="border-l-4 border-green-500 pl-4 py-2">
-                  <p className="font-medium">Agente respondeu</p>
-                  <p className="text-sm text-gray-600">Há 1 hora</p>
-                </div>
-                <div className="border-l-4 border-purple-500 pl-4 py-2">
-                  <p className="font-medium">Conversa encerrada</p>
-                  <p className="text-sm text-gray-600">Há 30 minutos</p>
-                </div>
+                {[
+                  { title: 'Nova conversa iniciada', desc: 'Cliente: Maria Santos', time: '2 horas atrás', icon: MessageSquare, color: 'text-blue-500' },
+                  { title: 'Agente respondeu automaticamente', desc: 'Tempo de resposta: 3s', time: '1 hora atrás', icon: Bot, color: 'text-green-500' },
+                  { title: 'Lead qualificado', desc: 'Interesse em plano Professional', time: '30 min atrás', icon: CheckCircle, color: 'text-purple-500' },
+                  { title: 'Conversa encerrada', desc: 'Satisfação: ⭐⭐⭐⭐⭐', time: '15 min atrás', icon: Clock, color: 'text-orange-500' },
+                ].map((item, i) => {
+                  const Icon = item.icon
+                  return (
+                    <div key={i} className="flex items-start gap-3">
+                      <Icon size={18} className={`${item.color} flex-shrink-0 mt-0.5`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900">{item.title}</p>
+                        <p className="text-xs text-gray-500">{item.desc}</p>
+                      </div>
+                      <span className="text-xs text-gray-400 flex-shrink-0">{item.time}</span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-bold mb-4">{t('dashboard.performanceMetrics')}</h2>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm font-medium">{t('dashboard.responseTime')}</span>
-                    <span className="text-sm font-bold">45s</span>
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Métricas de Performance</h2>
+              <div className="space-y-5">
+                {[
+                  { label: 'Tempo de Resposta', value: '45s', percent: 60, color: 'bg-blue-500' },
+                  { label: 'Satisfação do Cliente', value: '92%', percent: 92, color: 'bg-green-500' },
+                  { label: 'Taxa de Resolução', value: '87%', percent: 87, color: 'bg-purple-500' },
+                  { label: 'Conversas Resolvidas', value: '78%', percent: 78, color: 'bg-orange-500' },
+                ].map((metric, i) => (
+                  <div key={i}>
+                    <div className="flex justify-between mb-1.5">
+                      <span className="text-sm font-medium text-gray-700">{metric.label}</span>
+                      <span className="text-sm font-bold text-gray-900">{metric.value}</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2">
+                      <div
+                        className={`${metric.color} h-2 rounded-full`}
+                        style={{ width: `${metric.percent}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: '60%' }}></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm font-medium">{t('dashboard.satisfaction')}</span>
-                    <span className="text-sm font-bold">92%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-green-500 h-2 rounded-full" style={{ width: '92%' }}></div>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
         )}
 
         {activeTab === 'analytics' && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4">{t('analytics.title')}</h2>
-            <p className="text-gray-600">{t('messages.noData')}</p>
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-4">Analytics</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              {[
+                { label: 'Total de Mensagens', value: '12.456', color: 'bg-blue-50 text-blue-700' },
+                { label: 'Conversas Únicas', value: '3.891', color: 'bg-green-50 text-green-700' },
+                { label: 'Média por Dia', value: '415', color: 'bg-purple-50 text-purple-700' },
+              ].map((item, i) => (
+                <div key={i} className={`${item.color} rounded-lg p-4`}>
+                  <p className="text-2xl font-bold">{item.value}</p>
+                  <p className="text-sm mt-1">{item.label}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-gray-500 text-sm">Gráficos detalhados disponíveis em breve.</p>
           </div>
         )}
       </div>
