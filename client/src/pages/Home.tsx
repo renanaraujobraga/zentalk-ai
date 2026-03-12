@@ -150,6 +150,7 @@ export default function Home() {
   ]
 
   return (
+    <>
     <div className="min-h-screen bg-white text-gray-900">
 
       {/* NAVBAR */}
@@ -536,5 +537,6 @@ export default function Home() {
       </footer>
     </div>
     <ChatWidget />
+    </>
   )
 }
