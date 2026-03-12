@@ -21,10 +21,17 @@ import AdminProfile from './pages/admin/Profile'
 import AdminWhatsApp from './pages/admin/WhatsApp'
 import AdminAnalytics from './pages/admin/Analytics'
 
+// Admin Pages extras
+import AdminPlans from './pages/admin/Plans'
+import AdminInfluencers from './pages/admin/Influencers'
+
 // Client Pages
 import ClientDashboard from './pages/client/Dashboard'
 import ClientAgents from './pages/client/Agents'
 import ClientProfile from './pages/client/Profile'
+import ClientIntegrations from './pages/client/Integrations'
+import ClientSettings from './pages/client/Settings'
+import ClientReferral from './pages/client/Referral'
 
 function ProtectedRoute({ children, isAuthenticated }: { children: React.ReactNode; isAuthenticated: boolean }) {
   return isAuthenticated ? children : <Navigate to="/login" />
