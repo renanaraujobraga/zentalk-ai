@@ -134,6 +134,18 @@ export const whatsappWebhooks = table('whatsapp_webhooks', {
   createdAt: integer('created_at', { mode: 'timestamp' }),
 })
 
+// AI Chat Config table (global settings for the landing page chat widget)
+export const aiChatConfig = table('ai_chat_config', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  provider: text('provider').default('openai'),
+  apiKey: text('api_key'),
+  model: text('model').default('gpt-4o-mini'),
+  baseUrl: text('base_url'),
+  systemPrompt: text('system_prompt'),
+  enabled: integer('enabled', { mode: 'boolean' }).default(true),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }),
+})
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   influencers: many(influencers),

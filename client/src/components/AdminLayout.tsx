@@ -19,6 +19,7 @@ import {
   BarChart3,
   DollarSign,
   UserCheck,
+  Bot,
 } from 'lucide-react'
 
 interface AdminLayoutProps {
@@ -44,6 +45,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { id: 'ia-costs', label: 'Custos IA', icon: Zap, href: '/admin/ia-costs' },
     { id: 'monitoring', label: 'Monitoramento', icon: Activity, href: '/admin/monitoring' },
     { id: 'security', label: 'Segurança', icon: Lock, href: '/admin/security' },
+    { id: 'ai-config', label: 'Chat IA', icon: Bot, href: '/admin/ai-config' },
   ]
 
   const currentItem = menuItems.find(item => {

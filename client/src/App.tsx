@@ -22,6 +22,7 @@ import AdminWhatsApp from './pages/admin/WhatsApp'
 import AdminAnalytics from './pages/admin/Analytics'
 import AdminPlans from './pages/admin/Plans'
 import AdminInfluencers from './pages/admin/Influencers'
+import AdminAIConfig from './pages/admin/AIConfig'
 
 // Client Pages
 import ClientDashboard from './pages/client/Dashboard'
@@ -138,6 +139,7 @@ export default function App() {
         <Route path="/admin/whatsapp" element={<ProtectedAdminRoute><AdminWhatsApp /></ProtectedAdminRoute>} />
         <Route path="/admin/profile" element={<ProtectedAdminRoute><AdminProfile /></ProtectedAdminRoute>} />
         <Route path="/admin/analytics" element={<ProtectedAdminRoute><AdminAnalytics /></ProtectedAdminRoute>} />
+        <Route path="/admin/ai-config" element={<ProtectedAdminRoute><AdminAIConfig /></ProtectedAdminRoute>} />
 
         {/* Client Routes */}
         <Route path="/client" element={<ProtectedClientRoute><ClientDashboard /></ProtectedClientRoute>} />
