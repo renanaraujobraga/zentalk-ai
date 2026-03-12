@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import ChatWidget from '../components/ChatWidget'
 import { useAuthStore } from '../store/auth'
 import { useTranslation } from '../hooks/useTranslation'
 import { Globe, Zap, MessageSquare, TrendingUp, Shield, Star, Check, ChevronRight, Bot, Users, BarChart3, Headphones } from 'lucide-react'
@@ -534,5 +535,6 @@ export default function Home() {
         </div>
       </footer>
     </div>
+    <ChatWidget />
   )
 }
