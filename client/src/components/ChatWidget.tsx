@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { MessageCircle, X, Send, Bot, Minimize2 } from 'lucide-react'
+import { MessageCircle, X, Send, Bot, Minimize2, AlertCircle } from 'lucide-react'
 
 interface Message {
   id: number
@@ -8,33 +8,16 @@ interface Message {
   time: string
 }
 
-const BOT_RESPONSES: Record<string, string> = {
-  default: 'Obrigado pela sua mensagem! Um de nossos especialistas entrará em contato em breve. Enquanto isso, posso ajudar com informações sobre nossos planos.',
-  planos: 'Temos 3 planos: **Starter** ($19/mês) para pequenos negócios, **Professional** ($49/mês) para negócios em crescimento e **Enterprise** ($99/mês) para grandes empresas. Todos com 7 dias grátis!',
-  preco: 'Nossos planos começam em $19/mês. Todos incluem 7 dias de teste grátis, sem cartão de crédito. Quer saber mais sobre algum plano específico?',
-  whatsapp: 'Sim! O Zentalk.AI integra nativamente com o WhatsApp Business API. Você pode conectar em minutos e começar a atender seus clientes automaticamente.',
-  teste: 'Você pode testar gratuitamente por 7 dias, sem precisar de cartão de crédito. Basta criar sua conta em nosso site e começar!',
-  suporte: 'Nosso suporte está disponível por email para todos os planos. O plano Professional tem suporte prioritário e o Enterprise tem suporte 24/7 dedicado.',
-  ola: 'Olá! Seja bem-vindo ao Zentalk.AI! Como posso ajudar você hoje? Posso responder dúvidas sobre planos, integração com WhatsApp, preços e muito mais.',
-  oi: 'Oi! Tudo bem? Sou o assistente virtual do Zentalk.AI. Posso te ajudar com informações sobre nossa plataforma. O que você gostaria de saber?',
-}
-
-function getResponse(text: string): string {
-  const lower = text.toLowerCase()
-  if (lower.includes('plano') || lower.includes('planos')) return BOT_RESPONSES.planos
-  if (lower.includes('preço') || lower.includes('preco') || lower.includes('valor') || lower.includes('custo')) return BOT_RESPONSES.preco
-  if (lower.includes('whatsapp') || lower.includes('integr')) return BOT_RESPONSES.whatsapp
-  if (lower.includes('teste') || lower.includes('grátis') || lower.includes('gratis') || lower.includes('free')) return BOT_RESPONSES.teste
-  if (lower.includes('suporte') || lower.includes('ajuda') || lower.includes('atendimento')) return BOT_RESPONSES.suporte
-  if (lower.includes('olá') || lower.includes('ola') || lower.includes('bom dia') || lower.includes('boa tarde')) return BOT_RESPONSES.ola
-  if (lower.includes('oi') || lower.includes('hey') || lower.includes('hello')) return BOT_RESPONSES.oi
-  return BOT_RESPONSES.default
+interface ApiMessage {
+  role: 'user' | 'assistant'
+  content: string
 }
 
 const now = () => new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 
 const QUICK_QUESTIONS = [
-  'Quais são os planos?',
+  'Como funciona a Zentalk.AI?',
+  'Quais são os planos e preços?',
   'Como integrar com WhatsApp?',
   'Tem teste grátis?',
 ]
@@ -44,11 +27,13 @@ export default function ChatWidget() {
   const [minimized, setMinimized] = useState(false)
   const [input, setInput] = useState('')
   const [typing, setTyping] = useState(false)
+  const [error, setError] = useState(false)
+  const [history, setHistory] = useState<ApiMessage[]>([])
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
       from: 'bot',
-      text: 'Olá! 👋 Sou o assistente do Zentalk.AI. Como posso ajudar você hoje?',
+      text: 'Olá! 👋 Sou o assistente virtual da Zentalk.AI. Posso te ajudar com informações sobre nossa plataforma, planos, integrações e muito mais. Como posso te ajudar hoje?',
       time: now(),
     },
   ])
@@ -62,17 +47,43 @@ export default function ChatWidget() {
     }
   }, [messages, open, minimized])
 
-  const sendMessage = (text: string) => {
-    if (!text.trim()) return
+  const sendMessage = async (text: string) => {
+    if (!text.trim() || typing) return
+
     const userMsg: Message = { id: Date.now(), from: 'user', text: text.trim(), time: now() }
+    const newHistory: ApiMessage[] = [...history, { role: 'user', content: text.trim() }]
+
     setMessages(prev => [...prev, userMsg])
+    setHistory(newHistory)
     setInput('')
     setTyping(true)
-    setTimeout(() => {
-      const botMsg: Message = { id: Date.now() + 1, from: 'bot', text: getResponse(text), time: now() }
+    setError(false)
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: newHistory }),
+      })
+
+      const data = await response.json()
+      const replyText = data.reply || 'Desculpe, não consegui processar sua mensagem.'
+
+      const botMsg: Message = { id: Date.now() + 1, from: 'bot', text: replyText, time: now() }
       setMessages(prev => [...prev, botMsg])
+      setHistory(prev => [...prev, { role: 'assistant', content: replyText }])
+    } catch {
+      setError(true)
+      const errMsg: Message = {
+        id: Date.now() + 1,
+        from: 'bot',
+        text: 'Desculpe, estou com dificuldades técnicas no momento. Tente novamente em instantes.',
+        time: now(),
+      }
+      setMessages(prev => [...prev, errMsg])
+    } finally {
       setTyping(false)
-    }, 1000 + Math.random() * 800)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -99,7 +110,7 @@ export default function ChatWidget() {
       {/* Chat Window */}
       {open && (
         <div
-          className={`fixed bottom-6 right-6 z-50 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl flex flex-col transition-all duration-300 ${minimized ? 'h-14' : 'h-[480px]'}`}
+          className={`fixed bottom-6 right-6 z-50 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl flex flex-col transition-all duration-300 ${minimized ? 'h-14' : 'h-[500px]'}`}
           style={{ maxHeight: 'calc(100vh - 48px)' }}
         >
           {/* Header */}
@@ -111,13 +122,13 @@ export default function ChatWidget() {
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-blue-600" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-white font-semibold text-sm leading-tight">Zentalk.AI</p>
-              <p className="text-blue-200 text-xs">Online agora</p>
+              <p className="text-white font-semibold text-sm leading-tight">Zentalk.AI — Assistente</p>
+              <p className="text-blue-200 text-xs">Powered by IA · Online agora</p>
             </div>
-            <button onClick={() => setMinimized(!minimized)} className="p-1.5 hover:bg-white hover:bg-opacity-20 rounded-lg transition text-white">
+            <button onClick={() => setMinimized(!minimized)} className="p-1.5 hover:bg-white hover:bg-opacity-20 rounded-lg transition text-white" title="Minimizar">
               <Minimize2 className="w-4 h-4" />
             </button>
-            <button onClick={() => setOpen(false)} className="p-1.5 hover:bg-white hover:bg-opacity-20 rounded-lg transition text-white">
+            <button onClick={() => setOpen(false)} className="p-1.5 hover:bg-white hover:bg-opacity-20 rounded-lg transition text-white" title="Fechar">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -133,9 +144,9 @@ export default function ChatWidget() {
                         <Bot className="w-4 h-4 text-blue-600" />
                       </div>
                     )}
-                    <div className={`max-w-[75%] ${msg.from === 'user' ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+                    <div className={`max-w-[78%] flex flex-col gap-1 ${msg.from === 'user' ? 'items-end' : 'items-start'}`}>
                       <div
-                        className={`px-3 py-2 rounded-2xl text-sm leading-relaxed ${
+                        className={`px-3 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
                           msg.from === 'user'
                             ? 'bg-blue-600 text-white rounded-br-sm'
                             : 'bg-white text-gray-800 shadow-sm rounded-bl-sm'
@@ -147,6 +158,8 @@ export default function ChatWidget() {
                     </div>
                   </div>
                 ))}
+
+                {/* Typing indicator */}
                 {typing && (
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -159,12 +172,21 @@ export default function ChatWidget() {
                     </div>
                   </div>
                 )}
+
+                {/* Error banner */}
+                {error && (
+                  <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                    Problema de conexão. Tente novamente.
+                  </div>
+                )}
+
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Quick Questions */}
-              {messages.length <= 2 && (
-                <div className="px-3 py-2 bg-gray-50 border-t border-gray-100 flex gap-2 overflow-x-auto flex-shrink-0">
+              {/* Quick Questions — shown only at the start */}
+              {messages.length <= 1 && (
+                <div className="px-3 py-2 bg-gray-50 border-t border-gray-100 flex gap-2 overflow-x-auto flex-shrink-0 scrollbar-none">
                   {QUICK_QUESTIONS.map((q) => (
                     <button
                       key={q}
@@ -187,16 +209,18 @@ export default function ChatWidget() {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Digite sua mensagem..."
-                    className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none"
+                    disabled={typing}
+                    className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 outline-none disabled:opacity-50"
                   />
                   <button
                     onClick={() => sendMessage(input)}
-                    disabled={!input.trim()}
+                    disabled={!input.trim() || typing}
                     className="w-8 h-8 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white rounded-lg flex items-center justify-center transition flex-shrink-0"
                   >
                     <Send className="w-4 h-4" />
                   </button>
                 </div>
+                <p className="text-center text-xs text-gray-400 mt-2">Assistente de IA · Não compartilhamos dados pessoais</p>
               </div>
             </>
           )}

@@ -11,6 +11,7 @@ import clientsRoutes from './routes/clients'
 import agentsRoutes from './routes/agents'
 import vouchersRoutes from './routes/vouchers'
 import whatsappRoutes from './routes/whatsapp'
+import chatRoutes from './routes/chat'
 
 // Load .env only in development
 if (process.env.NODE_ENV !== 'production') {
@@ -56,6 +57,7 @@ app.use('/api/whatsapp', whatsappRoutes)
 app.use('/api/clients', clientsRoutes)
 app.use('/api/agents', agentsRoutes)
 app.use('/api/vouchers', vouchersRoutes)
+app.use('/api/chat', chatRoutes)
 
 // Health check
 app.get('/api/health', (_req: Request, res: Response) => {

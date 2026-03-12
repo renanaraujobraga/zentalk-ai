@@ -47,6 +47,9 @@ importers:
       lucide-react:
         specifier: ^0.263.1
         version: 0.263.1(react@18.3.1)
+      openai:
+        specifier: ^6.27.0
+        version: 6.27.0(ws@8.18.3)(zod@3.25.76)
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -1998,6 +2001,18 @@ packages:
   onetime@6.0.0:
     resolution: {integrity: sha512-1FlR+gjXK7X+AsAHso35MnyN5KqGwJRi/31ft6x0M194ht7S+rWAvd7PHss9xSKMzE0asv1pyIHaJYq+BbacAQ==}
     engines: {node: '>=12'}
+
+  openai@6.27.0:
+    resolution: {integrity: sha512-osTKySlrdYrLYTt0zjhY8yp0JUBmWDCN+Q+QxsV4xMQnnoVFpylgKGgxwN8sSdTNw0G4y+WUXs4eCMWpyDNWZQ==}
+    hasBin: true
+    peerDependencies:
+      ws: ^8.18.0
+      zod: ^3.25 || ^4.0
+    peerDependenciesMeta:
+      ws:
+        optional: true
+      zod:
+        optional: true
 
   p-limit@5.0.0:
     resolution: {integrity: sha512-/Eaoq+QyLSiXQ4lyYV23f14mZRQcXnxfHrN0vCai+ak9G0pp9iEQukIIZq5NccEvwRB8PUnZT0KsOoDCINS1qQ==}
@@ -4191,6 +4206,11 @@ snapshots:
   onetime@6.0.0:
     dependencies:
       mimic-fn: 4.0.0
+
+  openai@6.27.0(ws@8.18.3)(zod@3.25.76):
+    optionalDependencies:
+      ws: 8.18.3
+      zod: 3.25.76
 
   p-limit@5.0.0:
     dependencies:
