@@ -7,7 +7,7 @@
     "dev": "vite",
     "client:dev": "vite",
     "server:dev": "NODE_ENV=development tsx watch server/index.ts",
-    "build": "vite build",
+    "build": "vite build && node scripts/fix-html.mjs",
     "build:render": "pnpm install && pnpm drizzle-kit push && node seed-db.mjs && pnpm build",
     "preview": "vite preview",
     "start": "npx tsx server/index.ts",
