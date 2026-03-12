@@ -4,7 +4,7 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: pnpm install && pnpm drizzle-kit push && node seed-db.mjs && pnpm build
+    buildCommand: pnpm install && pnpm drizzle-kit push && node seed-db.mjs
     startCommand: npx tsx server/index.ts
     envVars:
       - key: NODE_VERSION
