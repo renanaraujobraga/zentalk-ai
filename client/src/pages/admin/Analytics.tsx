@@ -15,7 +15,6 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { Card } from '@/components/ui/card'
-import { api } from '@/lib/api'
 
 interface AnalyticsData {
   messagesTrend: Array<{ date: string; count: number }>
@@ -44,8 +43,13 @@ export default function Analytics() {
   const loadAnalytics = async () => {
     try {
       setLoading(true)
-      const response = await api.get('/api/analytics')
-      setData(response.data)
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/analytics', {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      })
+      if (!response.ok) throw new Error('Failed to load analytics')
+      const result = await response.json()
+      setData(result)
       setError(null)
     } catch (err) {
       setError('Erro ao carregar analytics')
