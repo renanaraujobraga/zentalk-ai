@@ -109,48 +109,75 @@ export default function AdminAIConfig() {
     }))
   }
 
-  const handleSave = async () => {
-    setSaving(true)
+  const doSave = async (showStatus = true): Promise<boolean> => {
+    // Require API key if none is saved yet
+    if (!config.hasApiKey && !apiKey.trim()) {
+      setSaveStatus('error')
+      return false
+    }
+    if (showStatus) setSaving(true)
     setSaveStatus('idle')
     try {
       const token = localStorage.getItem('token')
+      const body: Record<string, unknown> = {
+        provider: config.provider,
+        model: config.model,
+        baseUrl: config.baseUrl || PROVIDERS.find(p => p.id === config.provider)?.defaultUrl || '',
+        systemPrompt: config.systemPrompt,
+        enabled: config.enabled,
+      }
+      if (apiKey.trim()) body.apiKey = apiKey.trim()
       const res = await fetch('/api/chat/config', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          provider: config.provider,
-          apiKey: apiKey || undefined,
-          model: config.model,
-          baseUrl: config.baseUrl,
-          systemPrompt: config.systemPrompt,
-          enabled: config.enabled,
-        }),
+        body: JSON.stringify(body),
       })
       if (res.ok) {
-        setSaveStatus('success')
-        if (apiKey) {
+        if (apiKey.trim()) {
           setConfig(prev => ({ ...prev, hasApiKey: true }))
           setApiKey('')
         }
-        setTimeout(() => setSaveStatus('idle'), 3000)
+        if (showStatus) {
+          setSaveStatus('success')
+          setTimeout(() => setSaveStatus('idle'), 3000)
+        }
+        return true
       } else {
-        setSaveStatus('error')
+        const errData = await res.json().catch(() => ({}))
+        console.error('Save error:', errData)
+        if (showStatus) setSaveStatus('error')
+        return false
       }
-    } catch {
-      setSaveStatus('error')
+    } catch (e) {
+      console.error('Save exception:', e)
+      if (showStatus) setSaveStatus('error')
+      return false
     } finally {
-      setSaving(false)
+      if (showStatus) setSaving(false)
     }
   }
+
+  const handleSave = () => doSave(true)
 
   const handleTest = async () => {
     setTesting(true)
     setTestStatus('testing')
-    setTestMessage('')
+    setTestMessage('Salvando configurações...')
     try {
+      // Save first if there are unsaved changes (new API key or config)
+      if (apiKey.trim() || !config.hasApiKey) {
+        const saved = await doSave(false)
+        if (!saved) {
+          setTestStatus('error')
+          setTestMessage('Insira uma chave de API válida antes de testar.')
+          setTesting(false)
+          return
+        }
+      }
+      setTestMessage('Testando conexão com a IA...')
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -194,7 +221,7 @@ export default function AdminAIConfig() {
           <div className="flex items-center gap-3">
             <button
               onClick={handleTest}
-              disabled={testing || !config.hasApiKey}
+              disabled={testing || (!config.hasApiKey && !apiKey.trim())}
               className="flex items-center gap-2 px-4 py-2 border border-gray-200 bg-white rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition disabled:opacity-40"
             >
               <RefreshCw className={`w-4 h-4 ${testing ? 'animate-spin' : ''}`} />
@@ -221,7 +248,9 @@ export default function AdminAIConfig() {
         {saveStatus === 'error' && (
           <div className="mb-4 flex items-center gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            Erro ao salvar. Verifique sua conexão e tente novamente.
+            {!config.hasApiKey && !apiKey.trim()
+              ? 'Insira a chave de API antes de salvar.'
+              : 'Erro ao salvar. Verifique sua conexão e tente novamente.'}
           </div>
         )}
 
