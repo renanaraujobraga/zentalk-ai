@@ -43,6 +43,16 @@ const PROVIDERS = [
     docsUrl: 'https://console.anthropic.com/settings/keys',
   },
   {
+    id: 'manus',
+    name: 'Manus AI',
+    logo: '🤖',
+    description: 'gpt-4.1-mini, gpt-4.1-nano, gemini-2.5-flash',
+    defaultModel: 'gpt-4.1-mini',
+    defaultUrl: 'https://api.manus.im/api/llm-proxy/v1',
+    models: ['gpt-4.1-mini', 'gpt-4.1-nano', 'gemini-2.5-flash'],
+    docsUrl: 'https://manus.im',
+  },
+  {
     id: 'custom',
     name: 'Personalizado',
     logo: '⚙️',
@@ -275,7 +285,9 @@ export default function AdminAIConfig() {
                   className="mt-3 inline-flex items-center gap-1.5 text-xs text-blue-600 hover:underline"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
-                  Obter chave de API — {selectedProvider.name}
+                  {selectedProvider.id === 'manus'
+                    ? 'Saiba mais sobre o Manus AI'
+                    : `Obter chave de API — ${selectedProvider.name}`}
                 </a>
               )}
             </div>
@@ -413,6 +425,19 @@ export default function AdminAIConfig() {
                 <li>• O sistema é compatível com qualquer API no formato OpenAI</li>
               </ul>
             </div>
+
+            {/* Manus info card */}
+            {config.provider === 'manus' && (
+              <div className="bg-purple-50 border border-purple-100 rounded-xl p-4">
+                <p className="text-xs font-semibold text-purple-800 mb-2">🤖 Sobre o Manus AI</p>
+                <ul className="text-xs text-purple-700 space-y-1.5">
+                  <li>• Endpoint: <span className="font-mono">api.manus.im/api/llm-proxy/v1</span></li>
+                  <li>• Modelos disponíveis: gpt-4.1-mini, gpt-4.1-nano, gemini-2.5-flash</li>
+                  <li>• API compatível com o formato OpenAI</li>
+                  <li>• Insira sua chave de acesso Manus no campo "Chave de API"</li>
+                </ul>
+              </div>
+            )}
           </div>
         </div>
       </div>

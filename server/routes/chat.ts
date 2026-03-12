@@ -68,6 +68,7 @@ const PROVIDER_DEFAULTS: Record<string, { model: string; baseUrl: string }> = {
   openai: { model: 'gpt-4o-mini', baseUrl: 'https://api.openai.com/v1' },
   gemini: { model: 'gemini-2.0-flash', baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai' },
   anthropic: { model: 'claude-3-haiku-20240307', baseUrl: 'https://api.anthropic.com/v1' },
+  manus: { model: 'gpt-4.1-mini', baseUrl: 'https://api.manus.im/api/llm-proxy/v1' },
   custom: { model: 'gpt-4o-mini', baseUrl: '' },
 }
 
